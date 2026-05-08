@@ -4,8 +4,6 @@ RAG-Powered Workorder Management & Customer Service Platform
 
 [![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)]()
 [![Python](https://img.shields.io/badge/python-3.11+-green.svg)](requirements.txt)
-[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
-
 ## Features
 
 ### RAG Knowledge Base
