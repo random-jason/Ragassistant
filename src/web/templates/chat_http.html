@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时对话 (HTTP版本)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .chat-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-left: 1px solid #dee2e6;
+            border-right: 1px solid #dee2e6;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message.assistant {
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            position: relative;
+        }
+        
+        .message.user .message-content {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+        }
+        
+        .message.assistant .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #dee2e6;
+            border-bottom-left-radius: 0.25rem;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+        
+        .message.assistant .message-avatar {
+            background: #28a745;
+            color: white;
+        }
+        
+        .chat-input {
+            padding: 1rem;
+            background: white;
+            border-top: 1px solid #dee2e6;
+            border-radius: 0 0 0.5rem 0.5rem;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 0.75rem 1rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .typing-indicator.show {
+            display: block;
+        }
+        
+        .knowledge-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .confidence-score {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+        
+        .work-order-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            z-index: 1000;
+        }
+        
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .quick-action-btn {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 1rem;
+            border: 1px solid #007bff;
+            background: white;
+            color: #007bff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-action-btn:hover {
+            background: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5><i class="fas fa-cog me-2"></i>对话控制</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">用户ID</label>
+                            <input type="text" class="form-control" id="user-id" value="user_001">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">工单ID (可选)</label>
+                            <input type="number" class="form-control" id="work-order-id" placeholder="留空则自动创建">
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" id="start-chat">
+                                <i class="fas fa-play me-2"></i>开始对话
+                            </button>
+                            <button class="btn btn-secondary" id="end-chat" disabled>
+                                <i class="fas fa-stop me-2"></i>结束对话
+                            </button>
+                            <button class="btn btn-info" id="create-work-order">
+                                <i class="fas fa-plus me-2"></i>创建工单
+                            </button>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="mb-3">
+                            <h6>快速操作</h6>
+                            <div class="quick-actions">
+                                <button class="quick-action-btn" data-message="如何提交工单">如何提交工单</button>
+                                <button class="quick-action-btn" data-message="查看工单状态">查看工单状态</button>
+                                <button class="quick-action-btn" data-message="知识库搜索">知识库搜索</button>
+                                <button class="quick-action-btn" data-message="系统常见问题">系统常见问题</button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>会话信息</h6>
+                            <div id="session-info" class="text-muted">
+                                未开始对话
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 聊天区域 -->
+            <div class="col-md-9">
+                <div class="card chat-container">
+                    <div class="chat-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4><i class="fas fa-robot me-2"></i>智能助手 (HTTP版本)</h4>
+                                <small>基于知识库的智能客服系统</small>
+                            </div>
+                            <div id="connection-status" class="connection-status connected">
+                                <i class="fas fa-circle me-1"></i>HTTP连接
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-comments fa-3x mb-3"></i>
+                            <h5>欢迎使用智能助手</h5>
+                            <p>请点击"开始对话"按钮开始聊天</p>
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="typing-indicator">
+                        <i class="fas fa-spinner fa-spin me-2"></i>助手正在思考中...
+                    </div>
+                    
+                    <div class="chat-input">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="message-input" 
+                                   placeholder="请输入您的问题..." disabled>
+                            <button class="btn btn-primary" id="send-button" disabled>
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建工单模态框 -->
+    <div class="modal fade" id="workOrderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">创建工单</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="work-order-form">
+                        <div class="mb-3">
+                            <label class="form-label">工单标题</label>
+                            <input type="text" class="form-control" id="wo-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">问题描述</label>
+                            <textarea class="form-control" id="wo-description" rows="3" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">问题分类</label>
+                                    <select class="form-select" id="wo-category">
+                                        <option value="技术问题">技术问题</option>
+                                        <option value="APP功能">APP功能</option>
+                                        <option value="远程控制">远程控制</option>
+                                        <option value="技术支持">技术支持</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">优先级</label>
+                                    <select class="form-select" id="wo-priority">
+                                        <option value="low">低</option>
+                                        <option value="medium" selected>中</option>
+                                        <option value="high">高</option>
+                                        <option value="urgent">紧急</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="create-work-order-btn">创建工单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/chat_http.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,2490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>AI Helpdesk - 综合管理平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/design-system.css') }}?v=1.0.0" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}?v=1.0.0" rel="stylesheet">
+    <style>
+
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin: 0.25rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 0.5rem;
+        }
+
+        .main-content {
+            padding: 2rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat-card.info {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .chat-container {
+            height: 500px;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+        }
+
+        .chat-messages {
+            height: 350px;
+            overflow-y: auto;
+            padding: 1rem;
+            background-color: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #dee2e6;
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+
+        .chat-input {
+            padding: 1rem;
+            background: white;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .alert-item {
+            border-left: 4px solid;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .alert-item.critical {
+            border-left-color: var(--danger-color);
+        }
+
+        .alert-item.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .alert-item.info {
+            border-left-color: var(--info-color);
+        }
+
+        .health-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .health-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .health-dot.excellent { background-color: #28a745; }
+        .health-dot.good { background-color: #17a2b8; }
+        .health-dot.fair { background-color: #ffc107; }
+        .health-dot.poor { background-color: #fd7e14; }
+        .health-dot.critical { background-color: #dc3545; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .agent-status {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .agent-mode-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .agent-mode-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .knowledge-item {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--info-color);
+        }
+
+        .work-order-item {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .tab-content {
+            min-height: 400px;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-agent {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-agent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--primary-color);
+            background: white;
+            color: var(--primary-color);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .quick-action-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-robot me-2"></i>
+                <span data-i18n="nav-title">AI Helpdesk</span>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="btn-group me-3" role="group">
+                    <button type="button" class="btn btn-outline-light btn-sm" id="lang-zh" onclick="switchLanguage('zh')">
+                        <i class="fas fa-globe me-1"></i>中文
+                    </button>
+                    <button type="button" class="btn btn-outline-light btn-sm" id="lang-en" onclick="switchLanguage('en')">
+                        <i class="fas fa-globe me-1"></i>English
+                    </button>
+                </div>
+                <div class="health-indicator">
+                    <div class="health-dot" id="health-dot"></div>
+                    <span id="health-status" data-i18n="nav-health-checking">检查中...</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 sidebar p-0">
+                <div class="p-3">
+                    <h5 class="text-white mb-3">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        控制面板
+                    </h5>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#dashboard" data-tab="dashboard" data-i18n="sidebar-dashboard">
+                            <i class="fas fa-home"></i>
+                            仪表板
+                        </a>
+                        <a class="nav-link" href="#chat" data-tab="chat" data-i18n="sidebar-conversations">
+                            <i class="fas fa-comments"></i>
+                            智能对话
+                        </a>
+                        <a class="nav-link" href="#agent" data-tab="agent" data-i18n="sidebar-agent">
+                            <i class="fas fa-brain"></i>
+                            Agent管理
+                        </a>
+                        <a class="nav-link" href="#alerts" data-tab="alerts" data-i18n="sidebar-alerts">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            预警管理
+                        </a>
+                        <a class="nav-link" href="#knowledge" data-tab="knowledge" data-i18n="sidebar-knowledge">
+                            <i class="fas fa-database"></i>
+                            知识库
+                        </a>
+                        <a class="nav-link" href="#workorders" data-tab="workorders" data-i18n="sidebar-workorders">
+                            <i class="fas fa-tasks"></i>
+                            工单管理
+                        </a>
+                        <a class="nav-link" href="#feishu-sync" data-tab="feishu-sync" data-i18n="sidebar-feishu-sync">
+                            <i class="fas fa-sync"></i>
+                            飞书同步
+                        </a>
+                        <a class="nav-link" href="#conversation-history" data-tab="conversation-history" data-i18n="sidebar-conversation-history">
+                            <i class="fas fa-history"></i>
+                            对话历史
+                        </a>
+                        <a class="nav-link" href="#token-monitor" data-tab="token-monitor" data-i18n="sidebar-token-monitor">
+                            <i class="fas fa-coins"></i>
+                            Token监控
+                        </a>
+                        <a class="nav-link" href="#ai-monitor" data-tab="ai-monitor" data-i18n="sidebar-ai-monitor">
+                            <i class="fas fa-brain"></i>
+                            AI监控
+                        </a>
+                        <a class="nav-link" href="#system-optimizer" data-tab="system-optimizer" data-i18n="sidebar-system-optimizer">
+                            <i class="fas fa-tools"></i>
+                            系统优化
+                        </a>
+                        <a class="nav-link" href="#analytics" data-tab="analytics" data-i18n="sidebar-analytics">
+                            <i class="fas fa-chart-line"></i>
+                            数据分析
+                        </a>
+                        <a class="nav-link" href="#settings" data-tab="settings" data-i18n="sidebar-system">
+                            <i class="fas fa-sliders-h"></i>
+                            系统设置
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-10 main-content">
+                <!-- 仪表板标签页 -->
+                <div id="dashboard-tab" class="tab-content">
+                    <div class="row mb-4">
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card success">
+                                <div class="stat-number" id="total-sessions">0</div>
+                                <div class="stat-label">活跃会话</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card warning">
+                                <div class="stat-number" id="total-alerts">0</div>
+                                <div class="stat-label">活跃预警</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card danger">
+                                <div class="stat-number" id="total-workorders">0</div>
+                                <div class="stat-label">待处理工单</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card info">
+                                <div class="stat-number" id="knowledge-count">0</div>
+                                <div class="stat-label">知识条目</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-line me-2"></i>系统性能趋势</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="performanceChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-heartbeat me-2"></i>系统健康状态</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="health-indicator mb-3">
+                                        <div class="health-dot" id="system-health-dot"></div>
+                                        <span id="system-health-text">检查中...</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">健康分数</small>
+                                        <div class="progress">
+                                            <div class="progress-bar" id="health-progress" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">内存使用</small>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-info" id="memory-progress" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">CPU使用</small>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" id="cpu-progress" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-server me-2"></i>服务运行状态</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">Web服务端口</span>
+                                            <span class="badge bg-success" id="web-port-status">5000</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">WebSocket端口</span>
+                                            <span class="badge bg-info" id="ws-port-status">8765</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">日志级别</span>
+                                            <span class="badge bg-secondary" id="log-level-status">INFO</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">运行时间</span>
+                                            <span class="text-primary" id="uptime-status">计算中...</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="dashboard.refreshServiceStatus()">
+                                            <i class="fas fa-sync-alt me-1"></i>刷新状态
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 智能对话标签页 -->
+                <div id="chat-tab" class="tab-content" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-cog me-2"></i>对话控制</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">用户ID</label>
+                                        <input type="text" class="form-control" id="user-id" value="user_001">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">工单ID (可选)</label>
+                                        <input type="number" class="form-control" id="work-order-id" placeholder="留空则自动创建">
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-primary" id="start-chat">
+                                            <i class="fas fa-play me-2"></i>开始对话
+                                        </button>
+                                        <button class="btn btn-secondary" id="end-chat" disabled>
+                                            <i class="fas fa-stop me-2"></i>结束对话
+                                        </button>
+                                        <button class="btn btn-info" id="create-work-order">
+                                            <i class="fas fa-plus me-2"></i>创建工单
+                                        </button>
+                                    </div>
+                                    
+                                    <hr>
+                                    
+                                    <div class="mb-3">
+                                        <h6>快速操作</h6>
+                                        <div class="quick-actions">
+                                            <button class="quick-action-btn" data-message="如何提交工单">如何提交工单</button>
+                                            <button class="quick-action-btn" data-message="查看工单状态">查看工单状态</button>
+                                            <button class="quick-action-btn" data-message="知识库搜索">知识库搜索</button>
+                                            <button class="quick-action-btn" data-message="系统常见问题">系统常见问题</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <h6>会话信息</h6>
+                                        <div id="session-info" class="text-muted">
+                                            未开始对话
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-9">
+                            <div class="card chat-container">
+                                <div class="chat-header">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h4><i class="fas fa-robot me-2"></i>AI Helpdesk</h4>
+                                            <small>基于知识库的智能客服系统</small>
+                                        </div>
+                                        <div id="connection-status" class="badge bg-secondary">
+                                            <i class="fas fa-circle me-1"></i>未连接
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="chat-messages" id="chat-messages">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fas fa-comments fa-3x mb-3"></i>
+                                        <h5>欢迎使用 AI Helpdesk</h5>
+                                        <p>请点击"开始对话"按钮开始聊天</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="chat-input">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="message-input" 
+                                               placeholder="请输入您的问题..." disabled>
+                                        <button class="btn btn-primary" id="send-button" disabled>
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent管理标签页 -->
+                <div id="agent-tab" class="tab-content" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="agent-status">
+                                <h5><i class="fas fa-brain me-2"></i>Agent状态</h5>
+                                <div class="mb-3">
+                                    <label class="form-label text-white">Agent模式</label>
+                                    <div class="agent-mode-toggle">
+                                        <input type="checkbox" id="agent-mode-toggle">
+                                        <span class="slider"></span>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-white-50">当前状态: <span id="agent-current-state">空闲</span></small>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-white-50">活跃目标: <span id="agent-active-goals">0</span></small>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-white-50">可用工具: <span id="agent-available-tools">0</span></small>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-tools me-2"></i>工具管理</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="tools-list">
+                                        <div class="loading-spinner">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-plus me-2"></i>添加自定义工具</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" id="tool-name" placeholder="工具名称">
+                                    </div>
+                                    <div class="mb-3">
+                                        <textarea class="form-control" id="tool-description" rows="3" placeholder="工具描述"></textarea>
+                                    </div>
+                                    <button class="btn btn-primary w-100" id="register-tool">
+                                        <i class="fas fa-plus me-1"></i>注册工具
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-cogs me-2"></i>Agent控制</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <button class="btn btn-agent w-100" id="start-agent-monitoring">
+                                                <i class="fas fa-play me-2"></i>启动Agent监控
+                                            </button>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button class="btn btn-agent w-100" id="stop-agent-monitoring">
+                                                <i class="fas fa-stop me-2"></i>停止Agent监控
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <button class="btn btn-agent w-100" id="proactive-monitoring">
+                                                <i class="fas fa-search me-2"></i>主动监控检查
+                                            </button>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button class="btn btn-agent w-100" id="intelligent-analysis">
+                                                <i class="fas fa-chart-line me-2"></i>智能分析
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <button class="btn btn-secondary w-100" id="trigger-sample-action">
+                                                <i class="fas fa-play-circle me-2"></i>执行示例动作
+                                            </button>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button class="btn btn-outline-danger w-100" id="clear-agent-history">
+                                                <i class="fas fa-trash me-2"></i>清空历史
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5><i class="fas fa-comments me-2"></i>Agent对话</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <textarea class="form-control" id="agent-message-input" rows="3" placeholder="向Agent发送指令或问题..."></textarea>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-primary" id="send-agent-message">
+                                                    <i class="fas fa-paper-plane me-1"></i>发送
+                                                </button>
+                                                <button class="btn btn-outline-secondary" id="clear-agent-chat">
+                                                    <i class="fas fa-eraser me-1"></i>清空
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6><i class="fas fa-list me-2"></i>Agent执行历史</h6>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-primary" onclick="dashboard.triggerSampleAction()">
+                                                    <i class="fas fa-play me-1"></i>触发示例
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" onclick="dashboard.refreshAgentHistory()">
+                                                    <i class="fas fa-sync-alt me-1"></i>刷新
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger" onclick="dashboard.clearAgentHistory()">
+                                                    <i class="fas fa-trash me-1"></i>清空
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="agent-execution-history">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-history"></i>
+                                                    <p>暂无执行历史</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预警管理标签页 -->
+                <div id="alerts-tab" class="tab-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="critical-alerts" class="clickable-stat" data-type="alert" data-level="critical" style="cursor: pointer;">0</h4>
+                                            <p class="mb-0" data-i18n="alerts-critical">严重预警</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="warning-alerts" class="clickable-stat" data-type="alert" data-level="warning" style="cursor: pointer;">0</h4>
+                                            <p class="mb-0" data-i18n="alerts-warning">警告预警</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-exclamation-circle fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="info-alerts" class="clickable-stat" data-type="alert" data-level="info" style="cursor: pointer;">0</h4>
+                                            <p class="mb-0" data-i18n="alerts-info">信息预警</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-info-circle fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 id="total-alerts-count">0</h4>
+                                            <p class="mb-0" data-i18n="alerts-total">总预警数</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-chart-line fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-bell me-2"></i>活跃预警</h5>
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" id="alert-filter" style="width: auto;">
+                                    <option value="all">全部预警</option>
+                                    <option value="critical">严重</option>
+                                    <option value="warning">警告</option>
+                                    <option value="info">信息</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary" id="refresh-alerts">
+                                    <i class="fas fa-sync-alt me-1"></i>刷新
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="alerts-container">
+                                <div class="loading-spinner">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            </div>
+                            <div id="alerts-pagination" class="mt-3">
+                                <!-- 分页控件将在这里显示 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 知识库标签页 -->
+                <div id="knowledge-tab" class="tab-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5><i class="fas fa-database me-2"></i>知识库管理</h5>
+                                    <div class="btn-group">
+                                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addKnowledgeModal">
+                                            <i class="fas fa-plus me-1"></i>添加知识
+                                        </button>
+                                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadFileModal">
+                                            <i class="fas fa-upload me-1"></i>上传文件
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="knowledge-search" placeholder="搜索知识库...">
+                                            <button class="btn btn-outline-secondary" id="search-knowledge">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="knowledge-list">
+                                        <div class="loading-spinner">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                        </div>
+                                    </div>
+                                    <div id="knowledge-pagination" class="mt-3">
+                                        <!-- 分页控件将在这里显示 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-pie me-2"></i>知识库统计</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <small class="text-muted">总条目数</small>
+                                        <h4 id="knowledge-total">0</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted">活跃条目</small>
+                                        <h4 id="knowledge-active">0</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted">平均置信度</small>
+                                        <div class="progress">
+                                            <div class="progress-bar" id="knowledge-confidence" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 工单管理标签页 -->
+                <div id="workorders-tab" class="tab-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5><i class="fas fa-tasks me-2"></i>工单管理</h5>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-success btn-sm" onclick="dashboard.downloadTemplate()">
+                                            <i class="fas fa-download me-1"></i>下载模板
+                                        </button>
+                                        <button class="btn btn-info btn-sm" onclick="dashboard.showImportModal()">
+                                            <i class="fas fa-upload me-1"></i>导入工单
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createWorkOrderModal">
+                                            <i class="fas fa-plus me-1"></i>创建工单
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <select class="form-select" id="workorder-status-filter">
+                                                    <option value="all">全部状态</option>
+                                                    <option value="open">待处理</option>
+                                                    <option value="in_progress">处理中</option>
+                                                    <option value="resolved">已解决</option>
+                                                    <option value="closed">已关闭</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <select class="form-select" id="workorder-priority-filter">
+                                                    <option value="all">全部优先级</option>
+                                                    <option value="low">低</option>
+                                                    <option value="medium">中</option>
+                                                    <option value="high">高</option>
+                                                    <option value="urgent">紧急</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <button class="btn btn-outline-secondary w-100" id="refresh-workorders">
+                                                    <i class="fas fa-sync-alt me-1"></i>刷新
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="workorders-list">
+                                        <div class="loading-spinner">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                        </div>
+                                    </div>
+                                    <div id="workorders-pagination" class="mt-3">
+                                        <!-- 分页控件将在这里显示 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-bar me-2"></i>工单统计</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <small class="text-muted">总工单数</small>
+                                        <h4 id="workorders-total" class="clickable-stat" data-type="workorder" data-status="all" style="cursor: pointer; color: #0d6efd;">0</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted">待处理</small>
+                                        <h4 id="workorders-open" class="clickable-stat" data-type="workorder" data-status="open" style="cursor: pointer; color: #fd7e14;">0</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted">处理中</small>
+                                        <h4 id="workorders-progress" class="clickable-stat" data-type="workorder" data-status="in_progress" style="cursor: pointer; color: #0dcaf0;">0</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted">已解决</small>
+                                        <h4 id="workorders-resolved" class="clickable-stat" data-type="workorder" data-status="resolved" style="cursor: pointer; color: #198754;">0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 飞书同步标签页 -->
+                <div id="feishu-sync-tab" class="tab-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-sync me-2"></i>飞书同步管理
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- 配置区域 -->
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <h6 class="text-muted mb-3">飞书配置</h6>
+                                            <form id="feishuConfigForm">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="appId" class="form-label">应用ID</label>
+                                                            <input type="text" class="form-control" id="appId" placeholder="cli_xxxxxxxxxx">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="appSecret" class="form-label">应用密钥</label>
+                                                            <input type="password" class="form-control" id="appSecret" placeholder="输入应用密钥">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="appToken" class="form-label">应用Token</label>
+                                                            <input type="text" class="form-control" id="appToken" placeholder="输入应用Token">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="mb-3">
+                                                            <label for="tableId" class="form-label">表格ID</label>
+                                                            <input type="text" class="form-control" id="tableId" placeholder="输入表格ID">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex gap-2 flex-wrap">
+                                                    <button type="button" class="btn btn-primary" onclick="feishuSync.saveConfig()">
+                                                        <i class="fas fa-save me-1"></i>保存配置
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary" onclick="feishuSync.testConnection()">
+                                                        <i class="fas fa-plug me-1"></i>测试连接
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-info" onclick="feishuSync.exportConfig()">
+                                                        <i class="fas fa-download me-1"></i>导出配置
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-warning" onclick="feishuSync.showImportModal()">
+                                                        <i class="fas fa-upload me-1"></i>导入配置
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger" onclick="feishuSync.resetConfig()">
+                                                        <i class="fas fa-undo me-1"></i>重置配置
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- 同步状态 -->
+                                    <div class="row mb-4">
+                                        <div class="col-md-4">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h5 class="card-title text-primary" id="totalLocalWorkorders">0</h5>
+                                                    <p class="card-text">本地工单总数</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h5 class="card-title text-success" id="syncedWorkorders">0</h5>
+                                                    <p class="card-text">已同步工单</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card text-center">
+                                                <div class="card-body">
+                                                    <h5 class="card-title text-warning" id="unsyncedWorkorders">0</h5>
+                                                    <p class="card-text">未同步工单</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 同步操作 -->
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <h6 class="text-muted mb-3">同步操作</h6>
+                                            <div class="d-flex gap-2 mb-3">
+                                                <button class="btn btn-success" onclick="feishuSync.syncFromFeishu()">
+                                                    <i class="fas fa-download me-1"></i>从飞书同步
+                                                </button>
+                                                <button class="btn btn-primary" onclick="feishuSync.syncWithAI()">
+                                                    <i class="fas fa-robot me-1"></i>同步+AI建议
+                                                </button>
+                                                <button class="btn btn-info" onclick="feishuSync.previewFeishuData()">
+                                                    <i class="fas fa-eye me-1"></i>预览飞书数据
+                                                </button>
+                                                <button class="btn btn-warning" onclick="feishuSync.openFieldMapping()">
+                                                    <i class="fas fa-exchange-alt me-1"></i>字段映射管理
+                                                </button>
+                                                <button class="btn btn-outline-danger" onclick="feishuSync.checkPermissions()">
+                                                    <i class="fas fa-shield-alt me-1"></i>权限检查
+                                                </button>
+                                                <button class="btn btn-secondary" onclick="feishuSync.refreshStatus()">
+                                                    <i class="fas fa-refresh me-1"></i>刷新状态
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- 字段映射管理区域 -->
+                                            <div class="row mb-4" id="fieldMappingSection" style="display: none;">
+                                                <div class="col-12">
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <h6 class="card-title mb-0">
+                                                                <i class="fas fa-exchange-alt me-2"></i>字段映射管理
+                                                            </h6>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="row mb-3">
+                                                                <div class="col-md-6">
+                                                                    <button class="btn btn-primary btn-sm" onclick="feishuSync.discoverFields()">
+                                                                        <i class="fas fa-search"></i> 发现字段
+                                                                    </button>
+                                                                    <button class="btn btn-info btn-sm" onclick="feishuSync.loadMappingStatus()">
+                                                                        <i class="fas fa-sync"></i> 刷新状态
+                                                                    </button>
+                                                                </div>
+                                                                <div class="col-md-6 text-end">
+                                                                    <button class="btn btn-success btn-sm" onclick="feishuSync.showAddMappingModal()">
+                                                                        <i class="fas fa-plus"></i> 添加映射
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div id="fieldMappingContent"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="syncLimit" class="form-label">同步数量限制:</label>
+                                                <select class="form-select" id="syncLimit" style="width: auto; display: inline-block;">
+                                                    <option value="10">前10条</option>
+                                                    <option value="20">前20条</option>
+                                                    <option value="50">前50条</option>
+                                                    <option value="100">前100条</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- 同步进度 -->
+                                            <div class="progress mb-3" id="syncProgress" style="display: none;">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                     role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            
+                                            <!-- 同步日志 -->
+                                            <div class="mt-3">
+                                                <h6>同步日志</h6>
+                                                <div id="syncLog" class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">
+                                                    <div class="text-muted">暂无同步记录</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 预览数据 -->
+                                    <div class="row" id="previewSection" style="display: none;">
+                                        <div class="col-12">
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h5 class="card-title mb-0">
+                                                        <i class="fas fa-table me-2"></i>飞书数据预览
+                                                    </h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-striped" id="previewTable">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>记录ID</th>
+                                                                    <th>TR编号</th>
+                                                                    <th>TR描述</th>
+                                                                    <th>问题类型</th>
+                                                                    <th>来源</th>
+                                                                    <th>优先级/状态</th>
+                                                                    <th>操作</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 对话历史标签页 -->
+                <div id="conversation-history-tab" class="tab-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5><i class="fas fa-history me-2"></i>对话历史管理</h5>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="dashboard.refreshConversationHistory()">
+                                            <i class="fas fa-sync-alt me-1"></i>刷新
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm" onclick="dashboard.clearAllConversations()">
+                                            <i class="fas fa-trash me-1"></i>清空历史
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <input type="text" class="form-control" id="conversation-search" placeholder="搜索对话内容...">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <select class="form-select" id="conversation-user-filter">
+                                                    <option value="">全部用户</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <select class="form-select" id="conversation-date-filter">
+                                                    <option value="">全部时间</option>
+                                                    <option value="today">今天</option>
+                                                    <option value="week">本周</option>
+                                                    <option value="month">本月</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button class="btn btn-outline-secondary w-100" onclick="dashboard.filterConversations()">
+                                                    <i class="fas fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="conversation-list">
+                                        <div class="loading-spinner">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                        </div>
+                                    </div>
+                                    <div id="conversations-pagination" class="mt-3">
+                                        <!-- 分页控件将在这里显示 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-pie me-2"></i>对话统计</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <small class="text-muted">总对话数</small>
+                                        <h4 id="conversation-total">0</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted">今日对话</small>
+                                        <h4 id="conversation-today">0</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted">平均响应时间</small>
+                                        <h4 id="conversation-avg-response">0ms</h4>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted">活跃用户</small>
+                                        <h4 id="conversation-active-users">0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-memory me-2"></i>对话记忆</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">记忆类型</label>
+                                        <select class="form-select" id="memory-type">
+                                            <option value="short">短期记忆 (1小时)</option>
+                                            <option value="medium">中期记忆 (1天)</option>
+                                            <option value="long">长期记忆 (7天)</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">记忆容量</label>
+                                        <div class="progress">
+                                            <div class="progress-bar" id="memory-usage" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-muted" id="memory-usage-text">0 / 1000 条</small>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary btn-sm" onclick="dashboard.optimizeMemory()">
+                                            <i class="fas fa-compress me-1"></i>优化记忆
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="dashboard.exportMemory()">
+                                            <i class="fas fa-download me-1"></i>导出记忆
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Token监控标签页 -->
+                <div id="token-monitor-tab" class="tab-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="stat-card success">
+                                <div class="stat-number" id="token-today">0</div>
+                                <div class="stat-label">今日消耗</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card warning">
+                                <div class="stat-number" id="token-month">0</div>
+                                <div class="stat-label">本月消耗</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card danger">
+                                <div class="stat-number" id="token-cost">¥0</div>
+                                <div class="stat-label">总成本</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card info">
+                                <div class="stat-number" id="token-budget">¥1000</div>
+                                <div class="stat-label">预算限制</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5><i class="fas fa-chart-line me-2"></i>Token使用趋势</h5>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" onclick="dashboard.updateTokenChart('hour')">
+                                            小时
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary active" onclick="dashboard.updateTokenChart('day')">
+                                            天
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="dashboard.updateTokenChart('week')">
+                                            周
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="tokenChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-exclamation-triangle me-2"></i>阈值预警</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">日消耗预警</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="daily-threshold" value="10000">
+                                            <span class="input-group-text">tokens</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">月预算预警</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="monthly-budget" value="1000">
+                                            <span class="input-group-text">元</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="enable-alerts" checked>
+                                            <label class="form-check-label">启用预警通知</label>
+                                        </div>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button class="btn btn-primary" onclick="dashboard.saveTokenSettings()">
+                                            <i class="fas fa-save me-1"></i>保存设置
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5><i class="fas fa-list me-2"></i>详细使用记录</h5>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" onclick="dashboard.exportTokenData()">
+                                            <i class="fas fa-download me-1"></i>导出数据
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="dashboard.refreshTokenData()">
+                                            <i class="fas fa-sync-alt me-1"></i>刷新
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>时间</th>
+                                                    <th>用户</th>
+                                                    <th>模型</th>
+                                                    <th>输入Token</th>
+                                                    <th>输出Token</th>
+                                                    <th>总Token</th>
+                                                    <th>成本</th>
+                                                    <th>响应时间</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="token-records">
+                                                <tr>
+                                                    <td colspan="8" class="text-center text-muted">
+                                                        <i class="fas fa-spinner fa-spin me-2"></i>加载中...
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI监控标签页 -->
+                <div id="ai-monitor-tab" class="tab-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="stat-card success">
+                                <div class="stat-number" id="ai-success-rate">0%</div>
+                                <div class="stat-label">成功率</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card warning">
+                                <div class="stat-number" id="ai-response-time">0ms</div>
+                                <div class="stat-label">平均响应</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card danger">
+                                <div class="stat-number" id="ai-error-rate">0%</div>
+                                <div class="stat-label">错误率</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card info">
+                                <div class="stat-number" id="ai-total-calls">0</div>
+                                <div class="stat-label">总调用数</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-bar me-2"></i>模型性能对比</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="modelComparisonChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-pie me-2"></i>错误类型分布</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="errorDistributionChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5><i class="fas fa-exclamation-circle me-2"></i>错误监控</h5>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" onclick="dashboard.refreshErrorLog()">
+                                            <i class="fas fa-sync-alt me-1"></i>刷新
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" onclick="dashboard.clearErrorLog()">
+                                            <i class="fas fa-trash me-1"></i>清空日志
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>时间</th>
+                                                    <th>错误类型</th>
+                                                    <th>错误信息</th>
+                                                    <th>模型</th>
+                                                    <th>用户</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="error-log">
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted">
+                                                        <i class="fas fa-spinner fa-spin me-2"></i>加载中...
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统优化标签页 -->
+                <div id="system-optimizer-tab" class="tab-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card success">
+                                <div class="stat-number" id="cpu-usage">0%</div>
+                                <div class="stat-label">CPU使用率</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card warning">
+                                <div class="stat-number" id="memory-usage-percent">0%</div>
+                                <div class="stat-label">内存使用率</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card danger">
+                                <div class="stat-number" id="disk-usage">0%</div>
+                                <div class="stat-label">磁盘使用率</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card info">
+                                <div class="stat-number" id="network-latency">0ms</div>
+                                <div class="stat-label">网络延迟</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-tachometer-alt me-2"></i>性能优化</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">CPU优化</label>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-success" id="cpu-optimization" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="dashboard.optimizeCPU()">
+                                            <i class="fas fa-cog me-1"></i>优化CPU
+                                        </button>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">内存优化</label>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-info" id="memory-optimization" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="dashboard.optimizeMemory()">
+                                            <i class="fas fa-memory me-1"></i>优化内存
+                                        </button>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">磁盘优化</label>
+                                        <div class="progress mb-2">
+                                            <div class="progress-bar bg-warning" id="disk-optimization" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="dashboard.optimizeDisk()">
+                                            <i class="fas fa-hdd me-1"></i>优化磁盘
+                                        </button>
+                                    </div>
+                                    <div class="mt-3 d-flex gap-2">
+                                        <button class="btn btn-success btn-sm" onclick="dashboard.optimizeAll()">
+                                            <i class="fas fa-magic me-1"></i>一键优化
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="dashboard.clearCache()">
+                                            <i class="fas fa-broom me-1"></i>清理缓存
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-shield-alt me-2"></i>安全优化</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="input-validation" checked>
+                                            <label class="form-check-label">输入验证</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="rate-limiting" checked>
+                                            <label class="form-check-label">频率限制</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sql-injection-protection" checked>
+                                            <label class="form-check-label">SQL注入防护</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="xss-protection" checked>
+                                            <label class="form-check-label">XSS防护</label>
+                                        </div>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button class="btn btn-primary" onclick="dashboard.saveSecuritySettings()">
+                                            <i class="fas fa-save me-1"></i>保存安全设置
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-traffic-light me-2"></i>流量保护</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">请求限制 (每分钟)</label>
+                                        <input type="number" class="form-control" id="request-limit" value="100">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">并发控制</label>
+                                        <input type="number" class="form-control" id="concurrent-limit" value="50">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">IP白名单</label>
+                                        <textarea class="form-control" id="ip-whitelist" rows="3" placeholder="每行一个IP地址"></textarea>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button class="btn btn-primary" onclick="dashboard.saveTrafficSettings()">
+                                            <i class="fas fa-save me-1"></i>保存流量设置
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-dollar-sign me-2"></i>成本优化</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">预算控制 (每月)</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="monthly-budget-limit" value="1000">
+                                            <span class="input-group-text">元</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">成本限制 (每次调用)</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="per-call-cost-limit" value="0.1">
+                                            <span class="input-group-text">元</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="auto-cost-control" checked>
+                                            <label class="form-check-label">自动成本控制</label>
+                                        </div>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button class="btn btn-primary" onclick="dashboard.saveCostSettings()">
+                                            <i class="fas fa-save me-1"></i>保存成本设置
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5><i class="fas fa-heartbeat me-2"></i>稳定性监控</h5>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" onclick="dashboard.runHealthCheck()">
+                                            <i class="fas fa-stethoscope me-1"></i>健康检查
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="dashboard.refreshSystemStatus()">
+                                            <i class="fas fa-sync-alt me-1"></i>刷新状态
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <div class="health-dot excellent" id="system-health-indicator"></div>
+                                                <h6>系统健康</h6>
+                                                <span id="system-health-score">95%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <div class="health-dot good" id="database-health-indicator"></div>
+                                                <h6>数据库</h6>
+                                                <span id="database-health-score">98%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <div class="health-dot fair" id="api-health-indicator"></div>
+                                                <h6>API服务</h6>
+                                                <span id="api-health-score">92%</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center">
+                                                <div class="health-dot excellent" id="cache-health-indicator"></div>
+                                                <h6>缓存服务</h6>
+                                                <span id="cache-health-score">99%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据分析标签页 -->
+                <div id="analytics-tab" class="tab-content" style="display: none;">
+                    <!-- 图表控制面板 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-bar me-2"></i>数据分析控制面板</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label">时间范围</label>
+                                            <select class="form-select" id="timeRange">
+                                                <option value="7">最近7天</option>
+                                                <option value="30" selected>最近30天</option>
+                                                <option value="90">最近90天</option>
+                                                <option value="365">最近1年</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">图表类型</label>
+                                            <select class="form-select" id="chartType">
+                                                <option value="line">折线图</option>
+                                                <option value="bar" selected>柱状图</option>
+                                                <option value="pie">饼图</option>
+                                                <option value="doughnut">环形图</option>
+                                                <option value="radar">雷达图</option>
+                                                <option value="polar">极坐标图</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">数据维度</label>
+                                            <select class="form-select" id="dataDimension">
+                                                <option value="workorders" selected>工单统计</option>
+                                                <option value="alerts">预警统计</option>
+                                                <option value="performance">性能指标</option>
+                                                <option value="satisfaction">满意度分析</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">操作</label>
+                                            <div class="d-grid">
+                                                <button class="btn btn-primary" onclick="dashboard.updateCharts()">
+                                                    <i class="fas fa-sync-alt me-1"></i>刷新图表
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 主要图表区域 -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5><i class="fas fa-chart-line me-2"></i>主要趋势分析</h5>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" onclick="dashboard.exportChart('mainChart')">
+                                            <i class="fas fa-download me-1"></i>导出
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="dashboard.fullscreenChart('mainChart')">
+                                            <i class="fas fa-expand me-1"></i>全屏
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="position: relative; height: 400px;">
+                                        <canvas id="mainChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-pie me-2"></i>分布分析</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="position: relative; height: 300px;">
+                                        <canvas id="distributionChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 详细统计卡片 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="fas fa-tasks fa-2x text-primary me-3"></i>
+                                        <div>
+                                            <h3 class="mb-0" id="totalWorkorders">0</h3>
+                                            <small class="text-muted">总工单数</small>
+                                        </div>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="fas fa-exclamation-triangle fa-2x text-warning me-3"></i>
+                                        <div>
+                                            <h3 class="mb-0" id="openWorkorders">0</h3>
+                                            <small class="text-muted">待处理</small>
+                                        </div>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-warning" role="progressbar" id="openProgress" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                                        <div>
+                                            <h3 class="mb-0" id="resolvedWorkorders">0</h3>
+                                            <small class="text-muted">已解决</small>
+                                        </div>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-success" role="progressbar" id="resolvedProgress" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-center mb-2">
+                                        <i class="fas fa-star fa-2x text-info me-3"></i>
+                                        <div>
+                                            <h3 class="mb-0" id="avgSatisfaction">0</h3>
+                                            <small class="text-muted">平均满意度</small>
+                                        </div>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-info" role="progressbar" id="satisfactionProgress" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 多维度分析图表 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-area me-2"></i>时间趋势分析</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="position: relative; height: 300px;">
+                                        <canvas id="trendChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-bar me-2"></i>优先级分布</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="position: relative; height: 300px;">
+                                        <canvas id="priorityChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 详细分析报告 -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5><i class="fas fa-table me-2"></i>详细分析报告</h5>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary" onclick="dashboard.exportReport()">
+                                            <i class="fas fa-file-excel me-1"></i>导出Excel
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="dashboard.printReport()">
+                                            <i class="fas fa-print me-1"></i>打印报告
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div id="analytics-report">
+                                        <div class="loading-spinner text-center">
+                                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                            <p class="mt-2">正在生成分析报告...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统设置标签页 -->
+                <div id="settings-tab" class="tab-content" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h2><i class="fas fa-cog me-2"></i><span data-i18n="settings-title">系统设置</span></h2>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <!-- 基础系统配置 -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-cog me-2"></i><span data-i18n="settings-basic">基础系统配置</span></h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="system-settings-form">
+                                        <div class="mb-3">
+                                            <label class="form-label">API超时时间(秒)</label>
+                                            <input type="number" class="form-control" id="api-timeout" value="30">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">最大历史记录数</label>
+                                            <input type="number" class="form-control" id="max-history" value="10">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">自动刷新间隔(秒)</label>
+                                            <input type="number" class="form-control" id="refresh-interval" value="10">
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="auto-monitoring" checked>
+                                                <label class="form-check-label">自动监控</label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="agent-mode" checked>
+                                                <label class="form-check-label">启用Agent模式</label>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>保存设置
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 系统信息显示 -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-info-circle me-2"></i><span data-i18n="settings-system-info">系统信息</span></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="text-center">
+                                                <h6 class="text-muted" data-i18n="settings-current-port">当前服务端口</h6>
+                                                <h4 class="text-primary" id="current-server-port-display">5000</h4>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center">
+                                                <h6 class="text-muted" data-i18n="settings-websocket-port">WebSocket端口</h6>
+                                                <h4 class="text-info" id="current-websocket-port-display">8765</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>注意：</strong><span data-i18n="settings-port-note">服务端口配置需要在配置文件中修改，前端页面仅显示当前状态。</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <!-- 日志级别配置 -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-file-alt me-2"></i><span data-i18n="settings-log-config">日志配置</span></h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="log-settings-form">
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="settings-log-level">日志级别</label>
+                                            <select class="form-select" id="log-level">
+                                                <option value="DEBUG">DEBUG</option>
+                                                <option value="INFO" selected>INFO</option>
+                                                <option value="WARNING">WARNING</option>
+                                                <option value="ERROR">ERROR</option>
+                                                <option value="CRITICAL">CRITICAL</option>
+                                            </select>
+                                            <div class="form-text" data-i18n="settings-log-note">调整系统日志的详细程度</div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i><span data-i18n="settings-save">保存日志设置</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 系统信息与状态 -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-info-circle me-2"></i>系统信息与状态</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="system-info">
+                                        <div class="loading-spinner">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <!-- 创建工单模态框 -->
+    <div class="modal fade" id="createWorkOrderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">创建工单</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="work-order-form">
+                        <div class="mb-3">
+                            <label class="form-label">工单标题</label>
+                            <input type="text" class="form-control" id="wo-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">问题描述</label>
+                            <textarea class="form-control" id="wo-description" rows="3" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">问题分类</label>
+                                    <select class="form-select" id="wo-category">
+                                        <option value="技术问题">技术问题</option>
+                                        <option value="APP功能">APP功能</option>
+                                        <option value="远程控制">远程控制</option>
+                                        <option value="技术支持">技术支持</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">优先级</label>
+                                    <select class="form-select" id="wo-priority">
+                                        <option value="low">低</option>
+                                        <option value="medium" selected>中</option>
+                                        <option value="high">高</option>
+                                        <option value="urgent">紧急</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="create-work-order-btn">创建工单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工单导入模态框 -->
+    <div class="modal fade" id="importWorkOrderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">导入工单</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        请先下载模板文件，按照模板格式填写工单信息，然后上传Excel文件进行导入。
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">选择Excel文件</label>
+                        <input type="file" class="form-control" id="excel-file-input" accept=".xlsx,.xls">
+                        <div class="form-text">支持 .xlsx 和 .xls 格式，文件大小不超过16MB</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Excel文件列名说明：</span>
+                            <button class="btn btn-outline-primary btn-sm" onclick="dashboard.downloadTemplate()">
+                                <i class="fas fa-download me-1"></i>下载模板
+                            </button>
+                        </div>
+                        <div class="table-responsive mt-2">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>列名</th>
+                                        <th>说明</th>
+                                        <th>必填</th>
+                                        <th>示例</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>标题</td>
+                                        <td>工单标题</td>
+                                        <td><span class="badge bg-danger">是</span></td>
+                                        <td>系统无法登录</td>
+                                    </tr>
+                                    <tr>
+                                        <td>描述</td>
+                                        <td>工单详细描述</td>
+                                        <td><span class="badge bg-danger">是</span></td>
+                                        <td>用户反映系统无法正常登录</td>
+                                    </tr>
+                                    <tr>
+                                        <td>分类</td>
+                                        <td>工单分类</td>
+                                        <td><span class="badge bg-secondary">否</span></td>
+                                        <td>技术问题</td>
+                                    </tr>
+                                    <tr>
+                                        <td>优先级</td>
+                                        <td>工单优先级</td>
+                                        <td><span class="badge bg-secondary">否</span></td>
+                                        <td>high</td>
+                                    </tr>
+                                    <tr>
+                                        <td>状态</td>
+                                        <td>工单状态</td>
+                                        <td><span class="badge bg-secondary">否</span></td>
+                                        <td>open</td>
+                                    </tr>
+                                    <tr>
+                                        <td>解决方案</td>
+                                        <td>解决方案描述</td>
+                                        <td><span class="badge bg-secondary">否</span></td>
+                                        <td>检查电池和启动系统</td>
+                                    </tr>
+                                    <tr>
+                                        <td>满意度</td>
+                                        <td>满意度评分(1-5)</td>
+                                        <td><span class="badge bg-secondary">否</span></td>
+                                        <td>5</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div id="import-progress" class="d-none">
+                        <div class="progress mb-3">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            <span id="import-status">正在导入工单...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="import-result" class="d-none">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <span id="import-success-message"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="import-workorder-btn" onclick="dashboard.importWorkOrders()">
+                        <i class="fas fa-upload me-1"></i>开始导入
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加知识模态框 -->
+    <div class="modal fade" id="addKnowledgeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加知识</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="knowledge-form">
+                        <div class="mb-3">
+                            <label class="form-label">问题</label>
+                            <input type="text" class="form-control" id="knowledge-question" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">答案</label>
+                            <textarea class="form-control" id="knowledge-answer" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">分类</label>
+                            <select class="form-select" id="knowledge-category">
+                                <option value="技术问题">技术问题</option>
+                                <option value="APP功能">APP功能</option>
+                                <option value="远程控制">远程控制</option>
+                                <option value="技术支持">技术支持</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">置信度</label>
+                            <input type="range" class="form-range" id="knowledge-confidence" min="0" max="1" step="0.1" value="0.8">
+                            <div class="d-flex justify-content-between">
+                                <small>0</small>
+                                <small id="confidence-value">0.8</small>
+                                <small>1</small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="add-knowledge-btn">添加知识</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件上传模态框 -->
+    <div class="modal fade" id="uploadFileModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">上传文件生成知识库</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="file-upload-form" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label">选择文件</label>
+                            <input type="file" class="form-control" id="file-input" accept=".txt,.pdf,.doc,.docx,.md" required>
+                            <div class="form-text">支持的文件格式：TXT, PDF, DOC, DOCX, MD</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">处理方式</label>
+                            <select class="form-select" id="process-method">
+                                <option value="auto">自动提取Q&A</option>
+                                <option value="manual">手动指定问题</option>
+                                <option value="summary">生成摘要</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="manual-question-div" style="display: none;">
+                            <label class="form-label">指定问题</label>
+                            <input type="text" class="form-control" id="manual-question" placeholder="请输入要提取的问题">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">分类</label>
+                            <select class="form-select" id="file-category">
+                                <option value="技术问题">技术问题</option>
+                                <option value="APP功能">APP功能</option>
+                                <option value="远程控制">远程控制</option>
+                                <option value="技术支持">技术支持</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">置信度</label>
+                            <input type="range" class="form-range" id="file-confidence" min="0" max="1" step="0.1" value="0.7">
+                            <div class="d-flex justify-content-between">
+                                <small>0</small>
+                                <small id="file-confidence-value">0.7</small>
+                                <small>1</small>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="upload-progress" class="mt-3" style="display: none;">
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small id="upload-status">正在处理文件...</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-success" id="upload-file-btn">上传处理</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 飞书配置导入模态框 -->
+    <div class="modal fade" id="importConfigModal" tabindex="-1" aria-labelledby="importConfigModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importConfigModalLabel">导入配置</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="configJson" class="form-label">配置JSON数据:</label>
+                        <textarea class="form-control" id="configJson" rows="10" placeholder="粘贴导出的配置JSON数据..."></textarea>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        导入配置将覆盖当前所有配置，请谨慎操作！
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="feishuSync.importConfig()">导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知容器 -->
+    <div id="notificationContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+
+    <!-- 脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <!-- 核心模块 -->
+    <script src="{{ url_for('static', filename='js/core/store.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/services/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/NotificationManager.js') }}"></script>
+
+    <!-- 功能组件 -->
+    <script src="{{ url_for('static', filename='js/components/AlertManager.js') }}"></script>
+
+    <!-- 主应用文件 -->
+    <script src="{{ url_for('static', filename='js/app-new.js') }}"></script>
+
+    <!-- 原有dashboard.js保持兼容 -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=1.0.9"></script>
+</body>
+</html>

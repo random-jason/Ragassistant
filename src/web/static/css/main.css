@@ -1,0 +1,417 @@
+/* 主样式文件 - 导入所有模块 */
+@import url('variables.css');
+@import url('components.css');
+@import url('layout.css');
+
+/* 全局动画 */
+.fade-enter {
+    opacity: 0;
+}
+
+.fade-enter-active {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.fade-exit {
+    opacity: 1;
+}
+
+.fade-exit-active {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.slide-enter {
+    transform: translateX(100%);
+}
+
+.slide-enter-active {
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+}
+
+.slide-exit {
+    transform: translateX(0);
+}
+
+.slide-exit-active {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+/* 实用工具类 */
+.text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.text-truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.hover-scale {
+    transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.hover-shadow {
+    transition: box-shadow 0.2s ease;
+}
+
+.hover-shadow:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* 自定义滚动条区域 */
+.custom-scrollbar {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-secondary);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* 文件上传区域 */
+.file-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-xl);
+    text-align: center;
+    transition: var(--transition-fast);
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: var(--primary-color);
+    background: var(--bg-secondary);
+}
+
+.file-upload-area.dragover {
+    border-color: var(--primary-color);
+    background: rgba(0,123,255,0.05);
+}
+
+/* 代码高亮 */
+.highlight {
+    background: var(--warning-color);
+    color: var(--text-primary);
+    padding: 0.125rem 0.25rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.875em;
+}
+
+/* 搜索高亮 */
+.search-highlight {
+    background: yellow;
+    padding: 0.125rem 0.25rem;
+    border-radius: 2px;
+}
+
+/* 浮动操作按钮 */
+.fab {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: var(--text-white);
+    border: none;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    z-index: var(--z-fixed);
+}
+
+.fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 32px rgba(0,123,255,0.3);
+}
+
+/* 标签输入 */
+.tag-input {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    min-height: 38px;
+    cursor: text;
+}
+
+.tag-input input {
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 100px;
+    padding: 0.25rem;
+}
+
+.tag {
+    background: var(--primary-color);
+    color: var(--text-white);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: var(--font-size-sm);
+}
+
+.tag-remove {
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.tag-remove:hover {
+    opacity: 1;
+}
+
+/* 开关切换 */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--border-color);
+    transition: var(--transition);
+    border-radius: 24px;
+}
+
+.switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    transition: var(--transition);
+    border-radius: 50%;
+}
+
+input:checked + .switch-slider {
+    background: var(--primary-color);
+}
+
+input:checked + .switch-slider:before {
+    transform: translateX(20px);
+}
+
+/* 评分组件 */
+.rating {
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+.rating-star {
+    color: var(--border-color);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.rating-star.filled {
+    color: var(--warning-color);
+}
+
+.rating-star:hover {
+    color: var(--warning-color);
+}
+
+/* 步骤条 */
+.steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin: var(--spacing-lg) 0;
+}
+
+.step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+.step::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    right: -50%;
+    height: 2px;
+    background: var(--border-color);
+    z-index: -1;
+}
+
+.step:last-child::before {
+    display: none;
+}
+
+.step.active::before {
+    background: var(--primary-color);
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--border-color);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-sm);
+    transition: var(--transition);
+}
+
+.step.active .step-circle,
+.step.completed .step-circle {
+    background: var(--primary-color);
+    color: var(--text-white);
+}
+
+.step-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.step.active .step-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* 穿梭框 */
+.transfer {
+    display: flex;
+    gap: var(--spacing);
+    align-items: center;
+}
+
+_transfer-panel {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+}
+
+_transfer-header {
+    padding: var(--spacing);
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    font-weight: 500;
+}
+
+_transfer-body {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+_transfer-item {
+    padding: var(--spacing-sm) var(--spacing);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+_transfer-item:hover {
+    background: var(--bg-secondary);
+}
+
+_transfer-item.selected {
+    background: rgba(0,123,255,0.1);
+    color: var(--primary-color);
+}
+
+_transfer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* 统计图表容器 */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: var(--spacing) 0;
+}
+
+.chart-canvas {
+    max-height: 100%;
+}
+
+/* 焦点样式 */
+.focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* 可访问性 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* 选择禁用 */
+.user-select-none {
+    user-select: none;
+}
+
+/* 性能优化 */
+.will-change-transform {
+    will-change: transform;
+}
+
+.gpu-accelerated {
+    transform: translateZ(0);
+}

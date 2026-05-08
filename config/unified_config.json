@@ -1,0 +1,52 @@
+{
+  "database": {
+    "url": "sqlite:///local_test.db",
+    "pool_size": 10,
+    "max_overflow": 20,
+    "pool_timeout": 30,
+    "pool_recycle": 3306
+  },
+  "llm": {
+    "provider": "qwen",
+    "api_key": "",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "model": "qwen-plus-latest",
+    "temperature": 0.7,
+    "max_tokens": 2000,
+    "timeout": 30
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "websocket_port": 8765,
+    "debug": false,
+    "log_level": "INFO"
+  },
+  "feishu": {
+    "app_id": "",
+    "app_secret": "",
+    "app_token": "",
+    "table_id": "",
+    "status": "active",
+    "sync_limit": 10,
+    "auto_sync_interval": 0
+  },
+  "ai_accuracy": {
+    "auto_approve_threshold": 0.95,
+    "use_human_resolution_threshold": 0.9,
+    "manual_review_threshold": 0.8,
+    "ai_suggestion_confidence": 0.95,
+    "human_resolution_confidence": 0.9,
+    "prefer_human_when_low_accuracy": true,
+    "enable_auto_approval": true,
+    "enable_human_fallback": true
+  },
+  "system": {
+    "backup_enabled": true,
+    "backup_interval": 24,
+    "max_backup_files": 7,
+    "cache_enabled": true,
+    "cache_ttl": 3600,
+    "monitoring_enabled": true
+  }
+}

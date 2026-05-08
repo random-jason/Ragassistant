@@ -1,0 +1,16 @@
+{
+  "feishu": {
+    "app_id": "",
+    "app_secret": "",
+    "app_token": "",
+    "table_id": "",
+    "last_updated": "2025-09-19T18:40:55.291113",
+    "status": "active"
+  },
+  "system": {
+    "sync_limit": 10,
+    "ai_suggestions_enabled": true,
+    "auto_sync_interval": 0,
+    "last_sync_time": null
+  }
+}

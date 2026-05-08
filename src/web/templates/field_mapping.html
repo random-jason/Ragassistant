@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字段映射管理 - 智能助手</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <style>
+        .field-mapping-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .field-mapping-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+        }
+        .mapping-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+        .suggestion-item {
+            border: 1px solid #d1ecf1;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #d1ecf1;
+        }
+        .confidence-high {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .confidence-medium {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        .unmapped-field {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        .status-badge {
+            font-size: 0.8em;
+            padding: 4px 8px;
+        }
+        .loading {
+            display: none;
+        }
+        .loading.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="field-mapping-card">
+                    <div class="field-mapping-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4><i class="fas fa-exchange-alt"></i> 字段映射管理</h4>
+                                <p class="mb-0">管理飞书字段与本地工单字段的映射关系</p>
+                            </div>
+                            <div>
+                                <button class="btn btn-light btn-sm" onclick="window.close()">
+                                    <i class="fas fa-times"></i> 关闭
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- 操作按钮 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <button class="btn btn-primary" onclick="discoverFields()">
+                                    <i class="fas fa-search"></i> 发现字段
+                                </button>
+                                <button class="btn btn-info" onclick="loadMappingStatus()">
+                                    <i class="fas fa-sync"></i> 刷新状态
+                                </button>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="btn btn-success" onclick="showAddMappingModal()">
+                                    <i class="fas fa-plus"></i> 添加映射
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 加载状态 -->
+                        <div class="loading text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p>正在处理中...</p>
+                        </div>
+
+                        <!-- 字段发现结果 -->
+                        <div id="discovery-results" style="display: none;">
+                            <h5><i class="fas fa-lightbulb"></i> 字段发现结果</h5>
+                            <div id="discovery-content"></div>
+                        </div>
+
+                        <!-- 映射状态 -->
+                        <div id="mapping-status" style="display: none;">
+                            <h5><i class="fas fa-list"></i> 当前映射状态</h5>
+                            <div id="mapping-content"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加映射模态框 -->
+    <div class="modal fade" id="addMappingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加字段映射</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addMappingForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">飞书字段名</label>
+                                    <input type="text" class="form-control" id="feishuField" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">本地字段名</label>
+                                    <select class="form-select" id="localField" required>
+                                        <option value="">请选择本地字段</option>
+                                        <option value="order_id">工单号 (order_id)</option>
+                                        <option value="description">描述 (description)</option>
+                                        <option value="category">分类 (category)</option>
+                                        <option value="priority">优先级 (priority)</option>
+                                        <option value="status">状态 (status)</option>
+                                        <option value="source">来源 (source)</option>
+                                        <option value="created_at">创建时间 (created_at)</option>
+                                        <option value="solution">解决方案 (solution)</option>
+                                        <option value="resolution">解决结果 (resolution)</option>
+                                        <option value="created_by">创建人 (created_by)</option>
+                                        <option value="module">模块 (module)</option>
+                                        <option value="wilfulness">责任人 (wilfulness)</option>
+                                        <option value="date_of_close">关闭日期 (date_of_close)</option>
+                                        <option value="parent_record">父记录 (parent_record)</option>
+                                        <option value="has_updated_same_day">同日更新 (has_updated_same_day)</option>
+                                        <option value="operating_time">操作时间 (operating_time)</option>
+                                        <option value="ai_suggestion">AI建议 (ai_suggestion)</option>
+                                        <option value="updated_at">更新时间 (updated_at)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">别名 (可选，用逗号分隔)</label>
+                            <input type="text" class="form-control" id="aliases" placeholder="例如: 工单号,订单号,Ticket ID">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">匹配模式 (可选，用逗号分隔)</label>
+                            <input type="text" class="form-control" id="patterns" placeholder="例如: .*number.*,.*id.*">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">优先级</label>
+                            <select class="form-select" id="priority">
+                                <option value="1">高 (1)</option>
+                                <option value="2">中 (2)</option>
+                                <option value="3" selected>低 (3)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="addFieldMapping()">添加映射</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 发现字段
+        async function discoverFields() {
+            showLoading(true);
+            try {
+                const response = await fetch('/api/feishu-sync/field-mapping/discover', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ limit: 5 })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayDiscoveryResults(result.discovery_report);
+                } else {
+                    alert('字段发现失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('请求失败: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示发现结果
+        function displayDiscoveryResults(report) {
+            const container = document.getElementById('discovery-content');
+            let html = '';
+
+            // 已映射字段
+            if (report.mapped_fields && Object.keys(report.mapped_fields).length > 0) {
+                html += '<div class="mb-4"><h6 class="text-success"><i class="fas fa-check-circle"></i> 已映射字段</h6>';
+                for (const [feishuField, localField] of Object.entries(report.mapped_fields)) {
+                    html += `<div class="mapping-item">
+                        <strong>${feishuField}</strong> → <span class="badge bg-success">${localField}</span>
+                    </div>`;
+                }
+                html += '</div>';
+            }
+
+            // 未映射字段和建议
+            if (report.unmapped_fields && report.unmapped_fields.length > 0) {
+                html += '<div class="mb-4"><h6 class="text-warning"><i class="fas fa-exclamation-triangle"></i> 未映射字段</h6>';
+                for (const field of report.unmapped_fields) {
+                    html += `<div class="unmapped-field">
+                        <strong>${field}</strong>
+                        <div class="mt-2">`;
+                    
+                    const suggestions = report.suggested_mappings[field] || [];
+                    if (suggestions.length > 0) {
+                        html += '<small class="text-muted">建议映射:</small>';
+                        suggestions.forEach(suggestion => {
+                            const confidenceClass = suggestion.confidence === 'high' ? 'confidence-high' : 'confidence-medium';
+                            html += `<div class="suggestion-item ${confidenceClass}">
+                                <strong>${suggestion.local_field}</strong> 
+                                <span class="badge status-badge bg-${suggestion.confidence === 'high' ? 'success' : 'warning'}">${suggestion.confidence}</span>
+                                <br><small>${suggestion.reason}</small>
+                                <button class="btn btn-sm btn-outline-primary float-end" onclick="applySuggestion('${field}', '${suggestion.local_field}')">应用</button>
+                            </div>`;
+                        });
+                    } else {
+                        html += '<small class="text-muted">暂无建议映射</small>';
+                    }
+                    
+                    html += '</div></div>';
+                }
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+            document.getElementById('discovery-results').style.display = 'block';
+        }
+
+        // 应用建议映射
+        async function applySuggestion(feishuField, localField) {
+            if (confirm(`确定要将 "${feishuField}" 映射到 "${localField}" 吗？`)) {
+                try {
+                    const response = await fetch('/api/feishu-sync/field-mapping/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            feishu_field: feishuField,
+                            local_field: localField,
+                            priority: 3
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('映射添加成功！');
+                        discoverFields(); // 重新发现字段
+                    } else {
+                        alert('添加映射失败: ' + result.error);
+                    }
+                } catch (error) {
+                    alert('请求失败: ' + error.message);
+                }
+            }
+        }
+
+        // 加载映射状态
+        async function loadMappingStatus() {
+            showLoading(true);
+            try {
+                const response = await fetch('/api/feishu-sync/field-mapping/status');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayMappingStatus(result.status);
+                } else {
+                    alert('获取映射状态失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('请求失败: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 显示映射状态
+        function displayMappingStatus(status) {
+            const container = document.getElementById('mapping-content');
+            let html = '';
+
+            html += `<div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">${status.total_mappings}</h5>
+                            <p class="card-text">直接映射</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">${status.total_aliases}</h5>
+                            <p class="card-text">别名映射</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">${status.total_patterns}</h5>
+                            <p class="card-text">模式匹配</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title ${status.auto_mapping_enabled ? 'text-success' : 'text-danger'}">
+                                ${status.auto_mapping_enabled ? '启用' : '禁用'}
+                            </h5>
+                            <p class="card-text">自动映射</p>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+            // 显示当前映射
+            if (status.field_mapping && Object.keys(status.field_mapping).length > 0) {
+                html += '<h6>当前字段映射:</h6><div class="row">';
+                for (const [feishuField, localField] of Object.entries(status.field_mapping)) {
+                    html += `<div class="col-md-6 mb-2">
+                        <div class="mapping-item">
+                            <strong>${feishuField}</strong> → <span class="badge bg-primary">${localField}</span>
+                            <button class="btn btn-sm btn-outline-danger float-end" onclick="removeMapping('${feishuField}')">删除</button>
+                        </div>
+                    </div>`;
+                }
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+            document.getElementById('mapping-status').style.display = 'block';
+        }
+
+        // 显示添加映射模态框
+        function showAddMappingModal() {
+            const modal = new bootstrap.Modal(document.getElementById('addMappingModal'));
+            modal.show();
+        }
+
+        // 添加字段映射
+        async function addFieldMapping() {
+            const feishuField = document.getElementById('feishuField').value;
+            const localField = document.getElementById('localField').value;
+            const aliases = document.getElementById('aliases').value.split(',').map(s => s.trim()).filter(s => s);
+            const patterns = document.getElementById('patterns').value.split(',').map(s => s.trim()).filter(s => s);
+            const priority = parseInt(document.getElementById('priority').value);
+
+            if (!feishuField || !localField) {
+                alert('请填写飞书字段名和本地字段名');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/feishu-sync/field-mapping/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        feishu_field: feishuField,
+                        local_field: localField,
+                        aliases: aliases,
+                        patterns: patterns,
+                        priority: priority
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('映射添加成功！');
+                    bootstrap.Modal.getInstance(document.getElementById('addMappingModal')).hide();
+                    document.getElementById('addMappingForm').reset();
+                    loadMappingStatus(); // 刷新状态
+                } else {
+                    alert('添加映射失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('请求失败: ' + error.message);
+            }
+        }
+
+        // 删除映射
+        async function removeMapping(feishuField) {
+            if (confirm(`确定要删除映射 "${feishuField}" 吗？`)) {
+                try {
+                    const response = await fetch('/api/feishu-sync/field-mapping/remove', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            feishu_field: feishuField
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('映射删除成功！');
+                        loadMappingStatus(); // 刷新状态
+                    } else {
+                        alert('删除映射失败: ' + result.error);
+                    }
+                } catch (error) {
+                    alert('请求失败: ' + error.message);
+                }
+            }
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            const loading = document.querySelector('.loading');
+            if (show) {
+                loading.classList.add('show');
+            } else {
+                loading.classList.remove('show');
+            }
+        }
+
+        // 页面加载时自动加载映射状态
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMappingStatus();
+        });
+    </script>
+</body>
+</html>

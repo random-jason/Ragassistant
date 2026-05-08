@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Helpdesk - 字体和布局指南</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="design-system.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="card-title">AI Helpdesk - 字体和布局指南</h1>
+                        <p class="text-secondary">参考成熟CRM系统的设计标准</p>
+                    </div>
+                    <div class="card-body">
+                        
+                        <!-- 字体系统 -->
+                        <section class="mb-6">
+                            <h2>字体系统</h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h3>标题层级</h3>
+                                    <h1>主标题 (H1) - 36px</h1>
+                                    <h2>大标题 (H2) - 30px</h2>
+                                    <h3>中标题 (H3) - 24px</h3>
+                                    <h4>小标题 (H4) - 20px</h4>
+                                    <h5>副标题 (H5) - 18px</h5>
+                                    <h6>小副标题 (H6) - 16px</h6>
+                                </div>
+                                <div class="col-md-6">
+                                    <h3>文本大小</h3>
+                                    <p class="text-4xl">超大文本 (36px)</p>
+                                    <p class="text-3xl">大文本 (30px)</p>
+                                    <p class="text-2xl">中文本 (24px)</p>
+                                    <p class="text-xl">小文本 (20px)</p>
+                                    <p class="text-lg">大正文 (18px)</p>
+                                    <p class="text-base">正文 (16px)</p>
+                                    <p class="text-sm">小正文 (14px)</p>
+                                    <p class="text-xs">辅助文本 (12px)</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 字重系统 -->
+                        <section class="mb-6">
+                            <h2>字重系统</h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="font-light">轻字重 (300) - 用于辅助信息</p>
+                                    <p class="font-normal">正常字重 (400) - 用于正文</p>
+                                    <p class="font-medium">中等字重 (500) - 用于强调</p>
+                                    <p class="font-semibold">半粗字重 (600) - 用于小标题</p>
+                                    <p class="font-bold">粗字重 (700) - 用于标题</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h3>使用场景</h3>
+                                    <ul>
+                                        <li><strong>标题</strong>：使用 font-bold (700)</li>
+                                        <li><strong>小标题</strong>：使用 font-semibold (600)</li>
+                                        <li><strong>正文</strong>：使用 font-normal (400)</li>
+                                        <li><strong>强调</strong>：使用 font-medium (500)</li>
+                                        <li><strong>辅助信息</strong>：使用 font-light (300)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 颜色系统 -->
+                        <section class="mb-6">
+                            <h2>文本颜色</h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="text-primary">主要文本 - 用于重要内容</p>
+                                    <p class="text-secondary">次要文本 - 用于一般内容</p>
+                                    <p class="text-tertiary">第三级文本 - 用于辅助信息</p>
+                                    <p class="text-disabled">禁用文本 - 用于不可用状态</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h3>状态颜色</h3>
+                                    <p class="text-success">成功状态</p>
+                                    <p class="text-warning">警告状态</p>
+                                    <p class="text-error">错误状态</p>
+                                    <p class="text-info">信息状态</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 间距系统 -->
+                        <section class="mb-6">
+                            <h2>间距系统</h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h3>垂直间距</h3>
+                                    <div class="mb-1" style="background: #e2e8f0; padding: 4px;">mb-1 (4px)</div>
+                                    <div class="mb-2" style="background: #e2e8f0; padding: 8px;">mb-2 (8px)</div>
+                                    <div class="mb-3" style="background: #e2e8f0; padding: 12px;">mb-3 (12px)</div>
+                                    <div class="mb-4" style="background: #e2e8f0; padding: 16px;">mb-4 (16px)</div>
+                                    <div class="mb-6" style="background: #e2e8f0; padding: 24px;">mb-6 (24px)</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h3>水平间距</h3>
+                                    <div class="d-flex">
+                                        <div class="me-1" style="background: #e2e8f0; padding: 4px;">me-1</div>
+                                        <div class="me-2" style="background: #e2e8f0; padding: 8px;">me-2</div>
+                                        <div class="me-3" style="background: #e2e8f0; padding: 12px;">me-3</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 按钮系统 -->
+                        <section class="mb-6">
+                            <h2>按钮系统</h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h3>按钮大小</h3>
+                                    <button class="btn btn-primary btn-sm">小按钮</button>
+                                    <button class="btn btn-primary">普通按钮</button>
+                                    <button class="btn btn-primary btn-lg">大按钮</button>
+                                </div>
+                                <div class="col-md-6">
+                                    <h3>按钮样式</h3>
+                                    <button class="btn btn-primary">主要按钮</button>
+                                    <button class="btn btn-secondary">次要按钮</button>
+                                    <button class="btn btn-outline-primary">轮廓按钮</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 表格系统 -->
+                        <section class="mb-6">
+                            <h2>表格系统</h2>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>列标题</th>
+                                        <th>数据类型</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>数据行1</td>
+                                        <td>文本</td>
+                                        <td><span class="badge badge-success">正常</span></td>
+                                        <td><button class="btn btn-sm btn-outline-primary">编辑</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>数据行2</td>
+                                        <td>数字</td>
+                                        <td><span class="badge badge-warning">警告</span></td>
+                                        <td><button class="btn btn-sm btn-outline-primary">编辑</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </section>
+
+                        <!-- 分页系统 -->
+                        <section class="mb-6">
+                            <h2>分页系统</h2>
+                            <nav>
+                                <ul class="pagination">
+                                    <li class="page-item"><a class="page-link" href="#">上一页</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">1</a></li>
+                                    <li class="page-item active"><a class="page-link" href="#">2</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                    <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">10</a></li>
+                                    <li class="page-item"><a class="page-link" href="#">下一页</a></li>
+                                </ul>
+                            </nav>
+                        </section>
+
+                        <!-- 使用规范 -->
+                        <section class="mb-6">
+                            <h2>使用规范</h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h3>标题规范</h3>
+                                    <ul>
+                                        <li>页面标题使用 H1 (36px, bold)</li>
+                                        <li>区块标题使用 H2 (30px, semibold)</li>
+                                        <li>卡片标题使用 H3 (24px, semibold)</li>
+                                        <li>表单标题使用 H4 (20px, medium)</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h3>文本规范</h3>
+                                    <ul>
+                                        <li>正文使用 16px, normal</li>
+                                        <li>辅助信息使用 14px, normal</li>
+                                        <li>标签使用 12px, medium</li>
+                                        <li>按钮文字使用 14px, medium</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

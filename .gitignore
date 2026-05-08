@@ -1,0 +1,40 @@
+# Environment variables (secrets)
+.env
+
+# Databases
+*.db
+*.sqlite3
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/*.log
+
+# ML artifacts
+*.pkl
+*.joblib
+
+# Generated reports
+database_init_report.json
+
+# Internal plans
+plans/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (runtime data)
+uploads/*.xlsx

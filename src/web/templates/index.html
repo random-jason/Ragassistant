@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预警管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-shield-alt me-2"></i>
+                预警管理
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text" id="monitor-status">
+                    <i class="fas fa-circle text-warning"></i> 监控状态检查中...
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tachometer-alt me-2"></i>控制面板</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" id="start-monitor">
+                                <i class="fas fa-play me-2"></i>启动监控
+                            </button>
+                            <button class="btn btn-danger" id="stop-monitor">
+                                <i class="fas fa-stop me-2"></i>停止监控
+                            </button>
+                            <button class="btn btn-info" id="check-alerts">
+                                <i class="fas fa-search me-2"></i>检查预警
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统健康状态 -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-heartbeat me-2"></i>系统健康</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="health-score">
+                            <div class="score-circle" id="health-score-circle">
+                                <span id="health-score-text">0</span>
+                            </div>
+                            <div class="health-status" id="health-status">检查中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-9">
+                <!-- 预警统计卡片 -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 id="critical-alerts">0</h4>
+                                        <p class="mb-0">严重预警</p>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 id="warning-alerts">0</h4>
+                                        <p class="mb-0">警告预警</p>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-exclamation-circle fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 id="info-alerts">0</h4>
+                                        <p class="mb-0">信息预警</p>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-info-circle fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 id="total-alerts">0</h4>
+                                        <p class="mb-0">总预警数</p>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-chart-line fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预警列表 -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-bell me-2"></i>活跃预警</h5>
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm" id="alert-filter" style="width: auto;">
+                                <option value="all">全部预警</option>
+                                <option value="critical">严重</option>
+                                <option value="error">错误</option>
+                                <option value="warning">警告</option>
+                                <option value="info">信息</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="alert-sort" style="width: auto;">
+                                <option value="time-desc">时间降序</option>
+                                <option value="time-asc">时间升序</option>
+                                <option value="level-desc">级别降序</option>
+                                <option value="level-asc">级别升序</option>
+                            </select>
+                            <button class="btn btn-sm btn-outline-primary" id="refresh-alerts">
+                                <i class="fas fa-sync-alt me-1"></i>刷新
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="alerts-container">
+                            <div class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="text-muted mt-2">加载中...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预警规则管理 -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-cogs me-2"></i>预警规则管理</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#ruleModal">
+                                <i class="fas fa-plus me-1"></i>添加规则
+                            </button>
+                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#presetModal">
+                                <i class="fas fa-magic me-1"></i>预设模板
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- 预设规则卡片 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">常用预警规则模板</h6>
+                                <div class="row" id="preset-rules">
+                                    <!-- 预设规则卡片将在这里动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 自定义规则列表 -->
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>规则名称</th>
+                                        <th>类型</th>
+                                        <th>级别</th>
+                                        <th>阈值</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rules-table">
+                                    <tr>
+                                        <td colspan="6" class="text-center">
+                                            <i class="fas fa-spinner fa-spin me-2"></i>加载中...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑规则模态框 -->
+    <div class="modal fade" id="ruleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rule-modal-title">添加预警规则</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="rule-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">规则名称</label>
+                                    <input type="text" class="form-control" id="rule-name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">预警类型</label>
+                                    <select class="form-select" id="rule-type" required>
+                                        <option value="performance">性能预警</option>
+                                        <option value="quality">质量预警</option>
+                                        <option value="volume">量级预警</option>
+                                        <option value="system">系统预警</option>
+                                        <option value="business">业务预警</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">预警级别</label>
+                                    <select class="form-select" id="rule-level" required>
+                                        <option value="info">信息</option>
+                                        <option value="warning">警告</option>
+                                        <option value="error">错误</option>
+                                        <option value="critical">严重</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">阈值</label>
+                                    <input type="number" class="form-control" id="rule-threshold" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">规则描述</label>
+                            <textarea class="form-control" id="rule-description" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">条件表达式</label>
+                            <input type="text" class="form-control" id="rule-condition" placeholder="例如: satisfaction_avg < threshold" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">检查间隔(秒)</label>
+                                    <input type="number" class="form-control" id="rule-interval" value="300">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">冷却时间(秒)</label>
+                                    <input type="number" class="form-control" id="rule-cooldown" value="3600">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" id="rule-enabled" checked>
+                                        <label class="form-check-label">启用规则</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="save-rule">保存规则</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑规则模态框 -->
+    <div class="modal fade" id="editRuleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑预警规则</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-rule-form">
+                        <input type="hidden" id="edit-rule-name-original">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">规则名称</label>
+                                    <input type="text" class="form-control" id="edit-rule-name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">预警类型</label>
+                                    <select class="form-select" id="edit-rule-type" required>
+                                        <option value="performance">性能预警</option>
+                                        <option value="quality">质量预警</option>
+                                        <option value="volume">量级预警</option>
+                                        <option value="system">系统预警</option>
+                                        <option value="business">业务预警</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">预警级别</label>
+                                    <select class="form-select" id="edit-rule-level" required>
+                                        <option value="info">信息</option>
+                                        <option value="warning">警告</option>
+                                        <option value="error">错误</option>
+                                        <option value="critical">严重</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">阈值</label>
+                                    <input type="number" class="form-control" id="edit-rule-threshold" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">规则描述</label>
+                            <textarea class="form-control" id="edit-rule-description" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">条件表达式</label>
+                            <input type="text" class="form-control" id="edit-rule-condition" placeholder="例如: satisfaction_avg < threshold" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">检查间隔(秒)</label>
+                                    <input type="number" class="form-control" id="edit-rule-interval" value="300">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">冷却时间(秒)</label>
+                                    <input type="number" class="form-control" id="edit-rule-cooldown" value="3600">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" id="edit-rule-enabled" checked>
+                                        <label class="form-check-label">启用规则</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="update-rule">更新规则</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预设模板模态框 -->
+    <div class="modal fade" id="presetModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">预警规则预设模板</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- 性能预警模板 -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-primary mb-3"><i class="fas fa-tachometer-alt me-2"></i>性能预警模板</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="response_time">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                            <h6>响应时间预警</h6>
+                                            <p class="small text-muted">API响应时间超过阈值</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-warning">警告</span>
+                                                <span class="badge bg-info">性能</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="cpu_usage">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-microchip fa-2x text-danger mb-2"></i>
+                                            <h6>CPU使用率预警</h6>
+                                            <p class="small text-muted">CPU使用率过高</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-danger">严重</span>
+                                                <span class="badge bg-info">性能</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="memory_usage">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-memory fa-2x text-warning mb-2"></i>
+                                            <h6>内存使用率预警</h6>
+                                            <p class="small text-muted">内存使用率过高</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-warning">警告</span>
+                                                <span class="badge bg-info">性能</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="disk_usage">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-hdd fa-2x text-danger mb-2"></i>
+                                            <h6>磁盘使用率预警</h6>
+                                            <p class="small text-muted">磁盘空间不足</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-danger">严重</span>
+                                                <span class="badge bg-info">性能</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 业务预警模板 -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-success mb-3"><i class="fas fa-chart-line me-2"></i>业务预警模板</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="satisfaction_low">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-frown fa-2x text-warning mb-2"></i>
+                                            <h6>满意度预警</h6>
+                                            <p class="small text-muted">用户满意度低于阈值</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-warning">警告</span>
+                                                <span class="badge bg-success">业务</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="workorder_high">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-tasks fa-2x text-danger mb-2"></i>
+                                            <h6>工单积压预警</h6>
+                                            <p class="small text-muted">待处理工单过多</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-danger">严重</span>
+                                                <span class="badge bg-success">业务</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="error_rate_high">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                                            <h6>错误率预警</h6>
+                                            <p class="small text-muted">系统错误率过高</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-danger">严重</span>
+                                                <span class="badge bg-success">业务</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="conversion_low">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                                            <h6>转化率预警</h6>
+                                            <p class="small text-muted">用户转化率下降</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-warning">警告</span>
+                                                <span class="badge bg-success">业务</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 系统预警模板 -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-info mb-3"><i class="fas fa-server me-2"></i>系统预警模板</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="service_down">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-power-off fa-2x text-danger mb-2"></i>
+                                            <h6>服务宕机预警</h6>
+                                            <p class="small text-muted">关键服务不可用</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-danger">严重</span>
+                                                <span class="badge bg-info">系统</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="database_slow">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-database fa-2x text-warning mb-2"></i>
+                                            <h6>数据库慢查询</h6>
+                                            <p class="small text-muted">数据库查询过慢</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-warning">警告</span>
+                                                <span class="badge bg-info">系统</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="network_latency">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-wifi fa-2x text-warning mb-2"></i>
+                                            <h6>网络延迟预警</h6>
+                                            <p class="small text-muted">网络延迟过高</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-warning">警告</span>
+                                                <span class="badge bg-info">系统</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="api_error">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-bug fa-2x text-danger mb-2"></i>
+                                            <h6>API错误预警</h6>
+                                            <p class="small text-muted">API调用失败率过高</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-danger">严重</span>
+                                                <span class="badge bg-info">系统</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 质量预警模板 -->
+                        <div class="col-md-6 mb-4">
+                            <h6 class="text-warning mb-3"><i class="fas fa-award me-2"></i>质量预警模板</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="code_quality">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-code fa-2x text-warning mb-2"></i>
+                                            <h6>代码质量预警</h6>
+                                            <p class="small text-muted">代码质量评分过低</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-warning">警告</span>
+                                                <span class="badge bg-warning">质量</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="test_coverage">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-check-circle fa-2x text-info mb-2"></i>
+                                            <h6>测试覆盖率预警</h6>
+                                            <p class="small text-muted">测试覆盖率不足</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-info">信息</span>
+                                                <span class="badge bg-warning">质量</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="security_scan">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-shield-alt fa-2x text-danger mb-2"></i>
+                                            <h6>安全扫描预警</h6>
+                                            <p class="small text-muted">发现安全漏洞</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-danger">严重</span>
+                                                <span class="badge bg-warning">质量</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card preset-card" data-preset="performance_regression">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
+                                            <h6>性能回归预警</h6>
+                                            <p class="small text-muted">性能指标下降</p>
+                                            <div class="preset-params">
+                                                <span class="badge bg-warning">警告</span>
+                                                <span class="badge bg-warning">质量</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
