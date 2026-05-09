@@ -152,7 +152,3 @@ docker-compose up -d
 # See scripts/ directory for deployment scripts
 # nginx.conf for reverse proxy configuration
 ```
-
-## License
-
-MIT
