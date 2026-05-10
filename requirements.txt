@@ -15,7 +15,7 @@ websockets==15.0.1
 jieba==0.42.1
 
 # 系统监控
-psutil==5.9.8
+psutil==5.10.0
 
 # 数据处理
 pandas==2.2.2

@@ -7,6 +7,7 @@ import sys
 import os
 import logging
 import threading
+import signal
 import asyncio
 from datetime import datetime
 
@@ -28,7 +29,8 @@ def start_websocket_server():
     """启动WebSocket服务器"""
     try:
         from src.web.websocket_server import WebSocketServer
-        server = WebSocketServer(host="localhost", port=8765)
+        # 修复：使用 0.0.0.0 而不是 localhost，允许外部连接
+        server = WebSocketServer(host="0.0.0.0", port=8765)
         server.run()
     except Exception as e:
         print(f"WebSocket服务器启动失败: {e}")
@@ -47,6 +49,12 @@ def check_database_connection():
         print(f"✗ 数据库连接检查出错: {e}")
         return False
 
+def signal_handler(sig, frame):
+    """优雅关闭信号处理器"""
+    print("\n正在停止服务...")
+    print("感谢使用 AI Helpdesk！")
+    sys.exit(0)
+
 def main():
     """主函数"""
     print("=" * 60)
@@ -59,6 +67,10 @@ def main():
     setup_logging()
     logger = logging.getLogger(__name__)
 
+    # 注册信号处理器用于优雅关闭
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     try:
         # 检查必要目录
         os.makedirs('logs', exist_ok=True)
@@ -70,7 +82,7 @@ def main():
         if not check_database_connection():
             logger.error("数据库连接失败，退出启动")
             print("请根据日志检查数据库配置和网络连接。")
-            sys.exit(1) # 数据库连接失败时直接退出
+            sys.exit(1)
 
         # 跳过系统检查，直接启动（避免重复初始化）
         logger.info("跳过系统检查，直接启动服务...")
@@ -83,7 +95,7 @@ def main():
         print("  主页: http://localhost:5000")
         print("  预警管理: http://localhost:5000/alerts")
         print("  实时对话: http://localhost:5000/chat")
-        print("  WebSocket: ws://localhost:8765")
+        print("  WebSocket: ws://0.0.0.0:8765")
         print()
         print("按 Ctrl+C 停止服务")
         print("=" * 60)
@@ -105,7 +117,7 @@ def main():
         logger.info("用户手动停止服务")
     except Exception as e:
         print(f"启动失败: {e}")
-        logger.error(f"启动失败: {e}")
+        logger.error(f"启动失败: {e}", exc_info=True)
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ from src.analytics.monitor_service import MonitorService
 from src.analytics.token_monitor import TokenMonitor
 from src.analytics.ai_success_monitor import AISuccessMonitor
 from src.core.system_optimizer import SystemOptimizer
-from src.core.models import WorkOrder
+from src.core.models import WorkOrder, Alert
 
 class Assistant:
     """主类"""
@@ -261,10 +261,6 @@ class Assistant:
     def create_alert(self, alert_type: str, title: str, description: str, level: str = "medium") -> Dict[str, Any]:
         """创建预警"""
         try:
-            from ..core.database import db_manager
-            from ..core.models import Alert
-            from datetime import datetime
-            
             with db_manager.get_session() as session:
                 alert = Alert(
                     rule_name=f"手动预警_{datetime.now().strftime('%Y%m%d_%H%M%S')}",

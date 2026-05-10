@@ -79,7 +79,7 @@ try:
                 # 先尝试使用模型创建
                 new_admin = User(
                     username='admin',
-                    email='admin@.com',
+                    email='admin@example.com',
                     name='系统管理员',
                     password_hash=password_hash,
                     role='admin',
@@ -99,7 +99,7 @@ try:
                 insert_fields = ['username', 'email', 'name', 'password_hash', 'role']
                 insert_values = {
                     'username': 'admin',
-                    'email': 'admin@.com',
+                    'email': 'admin@example.com',
                     'name': '系统管理员',
                     'password_hash': password_hash,
                     'role': 'admin'
@@ -143,8 +143,8 @@ try:
 
         # 创建其他示例用户
         for username, name, email, password, role, region in [
-            ('overseas_ops', '海外运维', 'overseas@.com', 'ops123', 'overseas_ops', 'overseas'),
-            ('domestic_ops', '国内运维', 'domestic@.com', 'ops123', 'domestic_ops', 'domestic')
+            ('overseas_ops', '海外运维', 'overseas@example.com', 'ops123', 'overseas_ops', 'overseas'),
+            ('domestic_ops', '国内运维', 'domestic@example.com', 'ops123', 'domestic_ops', 'domestic')
         ]:
             ops_user = session.query(User).filter(User.username == username).first()
             if not ops_user:
